@@ -55,6 +55,7 @@ def demonstrate_centralizer_analysis():
     for size in unique_sizes:
         count = results['sample_sizes'].count(size)
         percentage = 100.0 * count / len(results['sample_sizes'])
+        # Convert to float to avoid formatting issues
         print(f"Size {size}: {count} times ({percentage:.1f}%)")
     
     print("\n" + "="*60)
