@@ -42,7 +42,7 @@ def demonstrate_centralizer_analysis():
     print()
     print("RESULTS SUMMARY")
     print("-" * 40)
-    print(f"Mean: {results['mean']}")
+    print(f"Mean: {float(results['mean']):.2f}")
     print(f"Minimum: {results['min']}")
     print(f"Maximum: {results['max']}")
     print(f"Distribution: {results['distribution']}")
@@ -54,7 +54,7 @@ def demonstrate_centralizer_analysis():
     print("-" * 40)
     for size in unique_sizes:
         count = results['sample_sizes'].count(size)
-        percentage = 100 * count / len(results['sample_sizes'])
+        percentage = 100.0 * count / len(results['sample_sizes'])
         print(f"Size {size}: {count} times ({percentage:.1f}%)")
     
     print("\n" + "="*60)
