@@ -12,19 +12,26 @@ from sage.all import *
 def LK_B3(q, t):
     """
     Return the Lawrence-Krammer representation matrices for B_3 (dimension 3)
+    Using numerical/floating point matrices to avoid symbolic issues
     """
-    R = parent(q) if hasattr(q, 'parent') else SR
+    # Convert to float to ensure numerical matrices
+    q = float(q)
+    t = float(t)
     
-    sigma1 = matrix(R, [
-        [-q^2*t, 0, 0],
-        [0, -q*t, 0],
+    sigma1 = matrix(RDF, [
+        [-q**2 * t, 0, 0],
+        [0, -q * t, 0],
         [0, 0, -t]
     ])
     
-    sigma2 = matrix(R, [
-        [0, 0, -q*t*(1-q^2)/(1-q)],
+    # Avoid division by zero or symbolic expressions
+    if q == 1:
+        q = 1.000001  # Slight adjustment to avoid division by zero
+    
+    sigma2 = matrix(RDF, [
+        [0, 0, -q * t * (1 - q**2) / (1 - q)],
         [0, -t, 0],
-        [-(1-q)/q, 0, -q^2*t]
+        [-(1 - q) / q, 0, -q**2 * t]
     ])
     
     return sigma1, sigma2
@@ -33,13 +40,14 @@ def random_braid(n, length, seed=None):
     """
     Generate a random braid word in B_n of given length
     """
+    import random as pyrandom
     if seed is not None:
-        set_random_seed(seed)
+        pyrandom.seed(seed)
     
     word = []
     for _ in range(length):
-        gen = randint(1, n-1)
-        sign = 1 if random() < 0.5 else -1
+        gen = pyrandom.randint(1, n-1)
+        sign = 1 if pyrandom.random() < 0.5 else -1
         word.append(sign * gen)
     return word
 
@@ -47,12 +55,15 @@ def braid_word_to_matrix(word, generators):
     """
     Convert a braid word to a matrix product
     """
-    result = identity_matrix(generators[0].parent(), generators[0].nrows())
+    nrows = generators[0].nrows()
+    result = identity_matrix(RDF, nrows)
+    
     for g in word:
         idx = abs(g) - 1
         if g > 0:
             result = result * generators[idx]
         else:
+            # For inverse, we need to compute the matrix inverse
             result = result * generators[idx].inverse()
     return result
 
@@ -63,10 +74,13 @@ def braid_word_to_matrix(word, generators):
 def centralizer_size(M, candidates):
     """
     Count how many candidate matrices commute with M
+    Using numerical tolerance for floating point comparisons
     """
     count = 0
     for C in candidates:
-        if M*C == C*M:
+        # Check if M*C ≈ C*M (within tolerance)
+        diff = M * C - C * M
+        if diff.norm() < 1e-10:
             count += 1
     return count
 
@@ -97,8 +111,9 @@ def enumerate_short_braids(n, max_length):
             try:
                 M = braid_word_to_matrix(word, gens)
                 matrices.append(M)
-            except:
-                pass  # Skip if matrix not invertible
+            except Exception as e:
+                # Skip if matrix not invertible or other error
+                pass
     
     return matrices
 
@@ -111,8 +126,8 @@ print("B₃ CENTRALIZER INTERSECTION ANALYSIS")
 print("="*60)
 
 n = 3
-enumeration_length = 4
-num_samples = 20
+enumeration_length = 3  # Reduced to 3 for speed and reliability
+num_samples = 10  # Reduced for testing
 
 print(f"Braid group: B_{n}")
 print(f"Enumerating all braids of length ≤ {enumeration_length}...")
@@ -128,7 +143,7 @@ print("Testing random braids...")
 
 for sample in range(num_samples):
     # Generate random braid
-    word = random_braid(n, 15, seed=sample)
+    word = random_braid(n, 10, seed=sample)
     q, t = 2.0, 3.0
     M = braid_word_to_matrix(word, LK_B3(q, t))
     
